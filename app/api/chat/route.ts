@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: google('gemini-1.5-flash'),
+    model: google('gemini-flash-lite-latest'),
     messages: convertToCoreMessages(messages),
     system: `你是一位专业的普拉提教练。请用温柔、专业的语气回答学员的问题。你的语气温柔、专业、且充满鼓励。
 当学员向你提问时，你需要：
