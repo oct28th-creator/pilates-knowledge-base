@@ -1,16 +1,29 @@
 "use client";
 
-import React from 'react';
-import { useChat } from '@ai-sdk/react'; // 确保包名正确
+import React, { useEffect, useRef } from 'react'; // 👈 新增：引入 useEffect 和 useRef
+import { useChat } from '@ai-sdk/react';
+import ReactMarkdown from 'react-markdown';
 import { Menu, Plus, Send, Paperclip, User, Bot } from 'lucide-react';
 
 export default function PilatesApp() {
-  // 回归最标准的写法，它会自动管理 input 和 handleSubmit
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  
+  // 👈 新增：用于精确定位消息列表末尾的引用
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 👈 新增：自动滚动到底部的函数
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // 👈 新增：每当消息数组发生变化，就触发滚动
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800 font-sans">
-      {/* 左侧侧边栏 */}
+      {/* 左侧侧边栏保持不变 */}
       <aside className="hidden md:flex flex-col w-64 bg-gray-900 text-gray-300 transition-all duration-300">
         <div className="p-4 flex items-center justify-between border-b border-gray-800">
           <h1 className="text-white font-bold text-lg">普拉提助手</h1>
@@ -24,9 +37,9 @@ export default function PilatesApp() {
       </aside>
 
       {/* 右侧主对话区 */}
-      <main className="flex-1 flex flex-col h-full relative">
+      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* 聊天记录显示区 */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-32">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-40">
           {messages.length === 0 && (
             <div className="flex gap-4 max-w-3xl mx-auto text-gray-500">
               <Bot size={20} />
@@ -39,20 +52,29 @@ export default function PilatesApp() {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${m.role === 'user' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'}`}>
                 {m.role === 'user' ? <User size={20} /> : <Bot size={20} />}
               </div>
+              
               <div className={`flex-1 space-y-2 flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`p-4 rounded-lg shadow-sm leading-relaxed max-w-[85%] whitespace-pre-wrap ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-100 text-gray-700'}`}>
-                  {/* 使用最通用的 content 显示方式 */}
-                  {m.content}
+                <div className={`p-4 rounded-lg shadow-sm leading-relaxed max-w-[90%] ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-100 text-gray-700'}`}>
+                  {/* 优化点：增加 break-words 防止长文本溢出，并确保 Markdown 容器宽度 */}
+                  <div className="prose prose-sm max-w-none break-words">
+                    <ReactMarkdown>
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
+          {/* 👈 新增：滚动锚点，确保它位于所有消息之后 */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* 底部输入框区域 */}
         <div className="absolute bottom-0 left-0 right-0 bg-white p-6 border-t">
           <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center">
             <input 
+              id="message-input" // 👈 修复控制台 ID 警告
+              name="message"      // 👈 修复控制台 Name 警告
               value={input} 
               onChange={handleInputChange}
               placeholder="输入你的问题..."
