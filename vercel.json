@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["hkg1"],
+  "env": {
+    "GOOGLE_GENERATIVE_AI_API_KEY": "@google_ai_key",
+    "AUTH_SECRET": "@auth_secret",
+    "DATABASE_URL": "@database_url"
+  }
+}
