@@ -22,7 +22,6 @@
     "ai": "^4.0.0",
     "bcryptjs": "^3.0.3",
     "lucide-react": "^0.575.0",
-    "mammoth": "^1.11.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "prisma": "^7.4.1",

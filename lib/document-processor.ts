@@ -1,7 +1,20 @@
-import { readFile } from "fs/promises";
-import mammoth from "mammoth";
+/**
+ * 文档处理模块
+ * 
+ * 注意：此模块在 Vercel serverless 环境中不可用
+ * - pdf-parse 依赖 Canvas API（DOMMatrix 等）
+ * - mammoth 在构建时可能导致问题
+ * 
+ * 生产环境建议：
+ * 1. 使用外部文档处理服务（如 AWS Textract）
+ * 2. 在本地预处理文档后上传文本
+ * 3. 部署到支持完整 Node.js 环境的平台
+ */
+
 import prisma from "./db";
-import { generateEmbedding, splitTextIntoChunks } from "./rag";
+
+// 在 serverless 环境中禁用文档处理
+const SERVERLESS_ENV = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 
 /**
  * 处理上传的文档，提取文本并生成向量
@@ -11,95 +24,12 @@ export async function processDocument(
   filePath: string,
   fileType: string
 ): Promise<void> {
-  try {
-    let textContent = "";
-
-    switch (fileType) {
-      case "pdf":
-        textContent = await extractPdfText(filePath);
-        break;
-      case "doc":
-        textContent = await extractDocText(filePath);
-        break;
-      case "image":
-        // 图片暂时使用文件名作为描述
-        // 后续可以集成图像识别API
-        textContent = await extractImageDescription(materialId);
-        break;
-      default:
-        console.log(`不支持的文件类型: ${fileType}`);
-        return;
-    }
-
-    if (!textContent.trim()) {
-      console.log(`文档内容为空: ${materialId}`);
-      return;
-    }
-
-    // 将文本分割成块
-    const chunks = splitTextIntoChunks(textContent);
-
-    // 为每个块生成向量并保存
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      const embedding = await generateEmbedding(chunk);
-
-      await prisma.materialChunk.create({
-        data: {
-          materialId,
-          content: chunk,
-          embedding: JSON.stringify(embedding),
-          chunkIndex: i,
-          metadata: JSON.stringify({
-            fileType,
-            chunkSize: chunk.length,
-          }),
-        },
-      });
-    }
-
-    console.log(`文档处理完成: ${materialId}, 共 ${chunks.length} 个块`);
-  } catch (error) {
-    console.error(`处理文档失败 ${materialId}:`, error);
-    throw error;
+  if (SERVERLESS_ENV) {
+    console.log(`文档处理在 serverless 环境中已禁用: ${materialId}`);
+    return;
   }
-}
 
-/**
- * 从 PDF 文件中提取文本
- * 注意：PDF 解析在 Vercel serverless 环境中不可用
- * 建议在本地环境处理 PDF，或使用外部 API 服务
- */
-async function extractPdfText(filePath: string): Promise<string> {
-  console.warn("PDF 解析在 serverless 环境中暂不支持");
-  // 返回文件基本信息作为后备
-  const fileName = filePath.split('/').pop() || 'PDF文档';
-  return `PDF 文档: ${fileName}`;
-}
-
-/**
- * 从 Word 文档中提取文本
- */
-async function extractDocText(filePath: string): Promise<string> {
-  try {
-    const dataBuffer = await readFile(filePath);
-    const result = await mammoth.extractRawText({ buffer: dataBuffer });
-    return result.value;
-  } catch (error) {
-    console.error("Word文档解析失败:", error);
-    return "";
-  }
-}
-
-/**
- * 获取图片描述（从数据库中获取标题和描述）
- */
-async function extractImageDescription(materialId: string): Promise<string> {
-  const material = await prisma.material.findUnique({
-    where: { id: materialId },
-  });
-  
-  if (!material) return "";
-  
-  return `${material.title} ${material.description || ""}`;
+  console.log(`文档处理功能暂时禁用: ${materialId}`);
+  // 生产环境中，此函数不执行任何操作
+  return;
 }
