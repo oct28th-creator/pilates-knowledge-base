@@ -5,7 +5,6 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { processDocument } from "@/lib/document-processor";
 
 /**
  * 注意：文件上传在 Vercel serverless 环境中有限制
@@ -112,8 +111,13 @@ export async function POST(req: NextRequest) {
     });
 
     // 异步处理文档（提取文本并创建向量）
+    // 使用动态导入避免构建时加载问题
     if (fileType !== "video") {
-      processDocument(material.id, filePath, fileType).catch(console.error);
+      import("@/lib/document-processor")
+        .then(({ processDocument }) => {
+          return processDocument(material.id, filePath, fileType);
+        })
+        .catch(console.error);
     }
 
     return NextResponse.json({
