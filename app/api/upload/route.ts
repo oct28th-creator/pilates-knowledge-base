@@ -7,6 +7,19 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { processDocument } from "@/lib/document-processor";
 
+/**
+ * 注意：文件上传在 Vercel serverless 环境中有限制
+ * 
+ * Vercel 的文件系统是只读的，上传的文件不会持久化。
+ * 
+ * 生产环境建议：
+ * 1. 使用 Vercel Blob 存储：https://vercel.com/docs/storage/vercel-blob
+ * 2. 使用 AWS S3 或其他云存储服务
+ * 3. 将文件上传功能部署到支持文件系统的服务器
+ * 
+ * 当前实现仅适用于本地开发环境
+ */
+
 // 允许的文件类型
 const ALLOWED_TYPES = {
   "video/mp4": "video",
