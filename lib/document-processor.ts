@@ -3,9 +3,6 @@ import mammoth from "mammoth";
 import prisma from "./db";
 import { generateEmbedding, splitTextIntoChunks } from "./rag";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
-
 /**
  * 处理上传的文档，提取文本并生成向量
  */
@@ -70,16 +67,14 @@ export async function processDocument(
 
 /**
  * 从 PDF 文件中提取文本
+ * 注意：PDF 解析在 Vercel serverless 环境中不可用
+ * 建议在本地环境处理 PDF，或使用外部 API 服务
  */
 async function extractPdfText(filePath: string): Promise<string> {
-  try {
-    const dataBuffer = await readFile(filePath);
-    const data = await pdfParse(dataBuffer);
-    return data.text;
-  } catch (error) {
-    console.error("PDF解析失败:", error);
-    return "";
-  }
+  console.warn("PDF 解析在 serverless 环境中暂不支持");
+  // 返回文件基本信息作为后备
+  const fileName = filePath.split('/').pop() || 'PDF文档';
+  return `PDF 文档: ${fileName}`;
 }
 
 /**
