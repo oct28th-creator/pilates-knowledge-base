@@ -1,0 +1,20 @@
+# Development files
+node_modules
+.next
+.git
+
+# Database files
+*.db
+*.db-journal
+/prisma/*.db
+/prisma/*.db-journal
+dev.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
